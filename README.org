@@ -1,0 +1,57 @@
+* org-auto-commit.el
+
+A minor mode to auto-commit changes to Org-mode files under configurable conditions.
+
+** Features
+
+- Auto-commit files using customizable predicate logic
+- Commit-on-save (with minimum time interval) or after idle
+- Post-commit hook to trigger external scripts (e.g. AI processors)
+- Uses Magit for Git operations
+- Silent fallback if file is not in Git or repo
+- Logging only on actual commits
+
+** Predicate System
+
+`org-auto-commit-mode` supports user-defined control over which files are eligible for auto-committing. It does this through a configurable predicate function:
+
+#+begin_src emacs-lisp
+(defcustom org-auto-commit-predicate-function #'org-auto-commit-predicate-by-directory ...)
+#+end_src
+
+There are two built-in predicates:
+
+1. `org-auto-commit-predicate-by-directory`: returns `t` only if the buffer's file is under a configured directory (`org-auto-commit-session-dir`).
+
+2. `org-auto-commit-predicate-by-local-variable`: returns `t` only if the Org buffer defines a buffer-local variable like this:
+
+   #+begin_src org
+   # Local Variables:
+   # auto-commit: t
+   # End:
+   #+end_src
+
+Users can write their own predicate function and assign it to `org-auto-commit-predicate-function`. It must return `t` or `nil`.
+
+** use-package Example
+
+This example sets up `org-auto-commit` to:
+- use the buffer-local variable predicate
+- define a 10-minute idle timeout
+- enforce a 5-minute minimum between commits
+- run a shell command after commit that starts an AI indexer script
+
+#+begin_src emacs-lisp
+(use-package org-auto-commit
+  :load-path \"~/path/to/org-auto-commit/\"
+  :hook (org-mode . org-auto-commit-mode)
+  :custom
+  (org-auto-commit-predicate-function #'org-auto-commit-predicate-by-local-variable)
+  (org-auto-commit-idle-time 600)
+  (org-auto-commit-min-interval 300)
+  (org-auto-commit-post-commit-cmd \"~/scripts/index-org-ai.sh\"))
+#+end_src
+
+** License
+
+MIT
